@@ -1,0 +1,10 @@
+# Node artifact files
+node_modules/
+
+# vscode
+.vscode
+
+# JetBrains IDE
+.idea/
+
+.DS_Store
