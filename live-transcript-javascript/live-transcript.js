@@ -1,8 +1,114 @@
 (async () => {
+  const live_audio_url = "<LIVE_AUDIO_URL_HERE>";
   const live_url = "<LIVE_TRANSCRIPT_URL_HERE>";
 
   let latestFetchedEndRange = 0;
 
+  const parseContent = (content) => {
+    return content
+      .split(/\r?\n/)
+      .filter((row) => row.length > 0)
+      .map((row) => JSON.parse(row));
+  };
+
+  const checkHasEnded = (content) => {
+    return content.some((row) => row.type === "end");
+  };
+
+  const getParagraphs = (content) => {
+    return content.filter((row) => !!row.t);
+  };
+
+  const addParaghraphs = (textRows) => {
+    // In this example each word gets wrapped in a span and get the timestamp as an attribute. This can be optimised and tweaked for your needs, since it will produce a lot of html elements in the DOM on long calls.
+    if (textRows.length > 0) {
+      const container = document.getElementById("live-transcript");
+      const spans = textRows.map((paragraph) => {
+        const span = document.createElement("span");
+        span.innerText = `${paragraph.t} `;
+        span.classList.add("hidden");
+        span.setAttribute("data-start", paragraph.s);
+        return span;
+      });
+
+      for (const span of spans) {
+        container.appendChild(span);
+      }
+    }
+  };
+
+  const stopPolling = () => {
+    document.getElementById("end-status").innerText =
+      "Live transcript has ended";
+    clearInterval(intervalId);
+  };
+
+  const createAudioElement = () => {
+    const audioElement = document.createElement("audio");
+    audioElement.controls = true;
+    document.getElementById("audio-container").appendChild(audioElement);
+    return audioElement;
+  };
+
+  // We need to use HLS when streaming live calls
+  const setupHLSStream = (url, audioElement) => {
+    const hls = new Hls();
+    hls.loadSource(url);
+    hls.attachMedia(audioElement);
+
+    // If you want to interact based on the audio live total progress it can be done with this type of event handler.
+    hls.on(Hls.Events.LEVEL_LOADED, (_, data) => {
+      if (data?.details?.totalduration) {
+        console.log("Total live call duration", data?.details?.totalduration);
+      }
+    });
+  };
+
+  // Safari browsers with native HLS support
+  const handleNativeHLSSupport = (audioElement, url) => {
+    if (audioElement.canPlayType("application/vnd.apple.mpegurl")) {
+      audioElement.src = url;
+    } else {
+      console.error("Your browser does not support HLS streaming");
+    }
+  };
+
+  const setupLiveAudio = (url) => {
+    const audioElement = createAudioElement();
+
+    if (Hls?.isSupported()) {
+      setupHLSStream(url, audioElement);
+    } else {
+      handleNativeHLSSupport(audioElement, url);
+    }
+
+    // Listen to current user progress of the call and display transcript paragraphs accordingly
+    audioElement.addEventListener("timeupdate", () => {
+      handleVisabilityChange(audioElement.currentTime);
+    });
+  };
+
+  const handleVisabilityChange = (() => {
+    // This example is just a simple way to show how to sync the transcript with the audio and should be handled more efficiently in production use.
+
+    let lastUpdate = 0; // A bit of an optimization where we do not update the UI on every audio progress change.
+
+    return (currentTime) => {
+      if (Math.abs(currentTime - lastUpdate) < 0.1) return;
+      lastUpdate = currentTime;
+
+      const spans = document.querySelectorAll("#live-transcript span");
+
+      for (const span of spans) {
+        const startValue = Number.parseInt(span.dataset.start, 10);
+        const isVisible = startValue < currentTime;
+        span.classList.toggle("visible", isVisible);
+        span.classList.toggle("hidden", !isVisible);
+      }
+    };
+  })();
+
+  // Fetching live transcripts
   const intervalId = setInterval(async () => {
     const response = await fetch(live_url, {
       headers: {
@@ -35,33 +141,7 @@
     if (hasEnded) {
       stopPolling();
     }
-  }, 1500); // Adjust the polling frequency to your needs
+  }, 1500); // Adjust the polling frequency for fetching transcript data to your needs
 
-  const parseContent = (content) => {
-    return content
-      .split(/\r?\n/)
-      .filter((row) => row.length > 0)
-      .map((row) => JSON.parse(row));
-  };
-
-  const checkHasEnded = (content) => {
-    return content.some((row) => row.type === "end");
-  };
-
-  const getParagraphs = (content) => {
-    return content.filter((row) => !!row.t).map((row) => row.t);
-  };
-
-  const addParaghraphs = (textRows) => {
-    if (textRows.length > 0) {
-      document.getElementById("live-transcript").innerText +=
-        textRows.join(" ");
-    }
-  };
-
-  const stopPolling = () => {
-    document.getElementById("end-status").innerText =
-      "Live transcript has ended";
-    clearInterval(intervalId);
-  };
+  setupLiveAudio(live_audio_url);
 })();

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Frontend live transcript polling example</title>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <style>
       .content {
         max-width: 800px;
@@ -11,10 +12,19 @@
         flex-direction: column;
         gap: 10px;
       }
+
+      .hidden {
+        color: red;
+      }
+
+      .visible {
+        color: black;
+      }
     </style>
 </head>
 <body>
     <h3>Frontend live transcript polling example</h3>
+    <div id="audio-container"></div>
     <div class="content">
       <div id="status">Live transcript will start shortly</div>
       <div id="live-transcript">
