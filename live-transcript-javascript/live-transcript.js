@@ -20,6 +20,7 @@
   };
 
   const addParaghraphs = (textRows) => {
+    // In this example each word gets wrapped in a span and get the timestamp as an attribute. This can be optimised and tweaked for your needs, since it will produce a lot of html elements in the DOM on long calls.
     if (textRows.length > 0) {
       const container = document.getElementById("live-transcript");
       const spans = textRows.map((paragraph) => {
@@ -54,6 +55,8 @@
     const hls = new Hls();
     hls.loadSource(url);
     hls.attachMedia(audioElement);
+
+    // If you want to interact based on the audio live total progress it can be done with this type of event handler.
     hls.on(Hls.Events.LEVEL_LOADED, (_, data) => {
       if (data?.details?.totalduration) {
         console.log("Total live call duration", data?.details?.totalduration);
