@@ -56,14 +56,14 @@ async function getEvent(eventId) {
 
 // Example usage:
 // Start the streaming process by passing the URL for live JSON transcript
-// startStreaming('https://ds.quartr.com/loop/live_transcript.jsonl');
+// startStreaming('https://streaming-utils.data.dev.quartr.cloud/loop/live_transcript.jsonl');
 
 function startStreaming(liveJsonTranscriptUrl) {
   let range = 0;
   const interval = 2000
 
   const refetchStream = setInterval(() => {
-    // test loop: https://ds.quartr.com/loop/live_transcript.jsonl
+    // test loop: https://streaming-utils.data.dev.quartr.cloud/loop/live_transcript.jsonl
     axios({
       method: "get",
       url: liveJsonTranscriptUrl,
