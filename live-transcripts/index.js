@@ -20,7 +20,7 @@ const readline = require("readline");
 const app = express();
 const apiUrl = "http://localhost:8080";
 const apiKey = "your_api_key_here";
-const demoLiveTranscriptLoop = "https://ds.quartr.com/loop/live_transcript.jsonl"
+const demoLiveTranscriptLoop = "https://streaming-utils.data.dev.quartr.cloud/loop/live_transcript.jsonl"
 
 app.use(bodyParser.json());
 
